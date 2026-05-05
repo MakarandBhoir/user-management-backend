@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.HtmlUtils;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,8 +35,9 @@ public class DemoController {
 
     @GetMapping(value = "/xss", produces = MediaType.TEXT_HTML_VALUE)
     public String reflectedXss(@RequestParam(defaultValue = "<b>demo</b>") String input) {
-        log.warn("Reflecting unsanitized HTML back to the caller for XSS demo");
-        return "<html><body><h1>User Input</h1><div>" + input + "</div></body></html>";
+        String escapedInput = HtmlUtils.htmlEscape(input);
+        log.warn("Reflecting HTML-escaped input back to the caller");
+        return "<html><body><h1>User Input</h1><div>" + escapedInput + "</div></body></html>";
     }
 
     @GetMapping("/slow")
