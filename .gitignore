@@ -1,0 +1,6 @@
+/target/
+/app.jar
+/.idea/
+/.vscode/
+*.iml
+*.log
