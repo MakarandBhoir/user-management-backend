@@ -1,0 +1,7 @@
+.git
+.github
+target
+app.jar
+README.md
+.vscode
+*.log

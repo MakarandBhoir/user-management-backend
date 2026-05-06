@@ -84,17 +84,41 @@ The application is intentionally insecure and must only be used for demos or tra
 
 ## Docker
 
-Build the jar first, then build the container image:
+The Dockerfile now performs a multi-stage build, so the image can be built directly from source:
 
 ```bash
-mvn clean package
-docker build -t user-management-demo .
+docker build -t user-management-backend .
 ```
 
 Run the container:
 
 ```bash
-docker run -p 8080:8080 -e PORT=8080 user-management-demo
+docker run -p 8080:8080 -e PORT=8080 user-management-backend
+```
+
+## Push to Azure Container Registry
+
+This repository includes a GitHub Actions workflow at `.github/workflows/acr-image.yml` that builds and pushes the image to `tcsregistry.azurecr.io/user-management-backend`.
+
+Required GitHub repository secrets:
+
+- `AZURE_CLIENT_ID`
+- `AZURE_TENANT_ID`
+- `AZURE_SUBSCRIPTION_ID`
+
+The recommended setup is GitHub OIDC with a federated credential on the Azure service principal or managed identity that has permission to push to `tcsregistry`.
+
+After the workflow runs, the registry receives these tags:
+
+- `tcsregistry.azurecr.io/user-management-backend:latest`
+- `tcsregistry.azurecr.io/user-management-backend:<git-sha>`
+
+Manual fallback push flow:
+
+```bash
+az acr login --name tcsregistry
+docker build -t tcsregistry.azurecr.io/user-management-backend:latest .
+docker push tcsregistry.azurecr.io/user-management-backend:latest
 ```
 
 ## Sample payload
