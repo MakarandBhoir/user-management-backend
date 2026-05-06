@@ -2,12 +2,14 @@ package com.tcs.usermanagement.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -17,25 +19,39 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // TODO: Replace this intentionally weak configuration with proper authorization
-        // rules and CSRF protection.
-        http.csrf(csrf -> csrf.disable())
+        http
+                // This is a stateless REST API: credentials are sent with every request via
+                // HTTP Basic Auth and no server-side session is maintained, so CSRF tokens
+                // are not applicable (there are no cookies to hijack).
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/demo/admin/credentials").authenticated()
-                        .requestMatchers("/h2-console/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**",
-                                "/actuator/**")
+                        // Public read-only documentation and dev-console endpoints
+                        .requestMatchers("/h2-console/**", "/swagger-ui/**", "/swagger-ui.html",
+                                "/v3/api-docs/**", "/actuator/health")
                         .permitAll()
-                        .anyRequest().permitAll())
+                        // Read-only user listing requires at least authentication
+                        .requestMatchers(HttpMethod.GET, "/users", "/users/**").authenticated()
+                        // Mutating user operations are restricted to ADMIN
+                        .requestMatchers(HttpMethod.POST, "/users").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/users/**").hasRole("ADMIN")
+                        // Sensitive demo endpoints require ADMIN
+                        .requestMatchers("/demo/sensitive-data", "/demo/admin/credentials").hasRole("ADMIN")
+                        // All other actuator endpoints require ADMIN
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
+                        // Demo endpoints are accessible to authenticated users
+                        .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
-                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
+                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
 
         return http.build();
     }
 
     @Bean
-    public UserDetailsService userDetailsService() {
+    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
         UserDetails demoAdmin = User.withUsername("demo-admin")
-                .password("demo123")
+                .password(passwordEncoder.encode("demo123"))
                 .roles("ADMIN")
                 .build();
 
@@ -43,8 +59,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    @SuppressWarnings("deprecation")
     public PasswordEncoder passwordEncoder() {
-        return NoOpPasswordEncoder.getInstance();
+        return new BCryptPasswordEncoder();
     }
 }

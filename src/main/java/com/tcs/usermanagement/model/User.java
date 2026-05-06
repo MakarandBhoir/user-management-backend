@@ -1,5 +1,6 @@
 package com.tcs.usermanagement.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -58,6 +59,7 @@ public class User {
         this.email = email;
     }
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     public String getPassword() {
         return password;
     }

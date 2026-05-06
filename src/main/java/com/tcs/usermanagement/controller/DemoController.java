@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,7 +18,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/demo")
-@CrossOrigin(origins = "*")
 public class DemoController {
 
     private static final Logger log = LoggerFactory.getLogger(DemoController.class);
@@ -60,10 +58,8 @@ public class DemoController {
     @GetMapping("/admin/credentials")
     public ResponseEntity<Map<String, Object>> protectedWeakAuthDemo() {
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("message", "This endpoint is protected by hardcoded Basic Auth credentials.");
-        response.put("username", "demo-admin");
-        response.put("password", "demo123");
-        response.put("warning", "Do not do this outside a training demo.");
+        response.put("message", "This endpoint is protected by Basic Auth. Credentials must never be hardcoded or returned in API responses.");
+        response.put("warning", "Always store credentials in a secrets manager and authenticate via a proper identity provider.");
         return ResponseEntity.ok(response);
     }
 }
