@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,9 +20,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // CSRF is disabled because this is a stateless REST API protected by HTTP Basic.
-                // In a production deployment using cookies, CSRF protection must be enabled.
+                // This is a stateless REST API: credentials are sent with every request via
+                // HTTP Basic Auth and no server-side session is maintained, so CSRF tokens
+                // are not applicable (there are no cookies to hijack).
                 .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public read-only documentation and dev-console endpoints
                         .requestMatchers("/h2-console/**", "/swagger-ui/**", "/swagger-ui.html",
