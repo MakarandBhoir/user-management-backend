@@ -18,7 +18,7 @@ public class UnsafeUserQueryRepository {
     private JdbcTemplate jdbcTemplate;
 
     public List<Map<String, Object>> searchByNameVulnerable(String name) {
-        String unsafeSql = "SELECT id, name, email, password, role FROM app_user WHERE name = '" + name + "'";
+        String unsafeSql = "SELECT id, name, email, role FROM app_user WHERE name = '" + name + "'";
         log.warn("Executing intentionally unsafe SQL for demo purposes: {}", unsafeSql);
         return jdbcTemplate.queryForList(unsafeSql);
     }

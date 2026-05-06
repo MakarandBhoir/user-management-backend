@@ -6,6 +6,7 @@ import com.tcs.usermanagement.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
@@ -22,6 +23,9 @@ public class UserService {
 
     @Autowired
     private UnsafeUserQueryRepository unsafeUserQueryRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public User createUser(User user) {
         log.info("Attempting to create user with email {}", user.getEmail());
@@ -42,10 +46,8 @@ public class UserService {
             throw new RuntimeException("Email already exists");
         }
 
-        log.warn("Saving user with plain text password for demo purposes. email={}", user.getEmail());
-        // TODO: Replace the repeated validation logic in create and update with proper
-        // shared validation.
-        // TODO: Encrypt passwords before persistence in any non-demo environment.
+        log.info("Saving user with hashed password. email={}", user.getEmail());
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         User savedUser = userRepository.save(user);
 
         log.info("Created user with id {}", savedUser.getId());
@@ -86,10 +88,10 @@ public class UserService {
 
         existingUser.setName(updatedUser.getName());
         existingUser.setEmail(updatedUser.getEmail());
-        existingUser.setPassword(updatedUser.getPassword());
+        existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
         existingUser.setRole(updatedUser.getRole());
 
-        log.warn("Updating user {} with plain text password for demo purposes", id);
+        log.info("Updating user {} with hashed password", id);
         // TODO: Refactor this long method into smaller units and add proper exception
         // mapping.
         User savedUser = userRepository.save(existingUser);
